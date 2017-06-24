@@ -2,8 +2,10 @@ package courseproject.huangyuming.wordsdividedreminder;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,9 +16,12 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.table.DatabaseTable;
 import com.woxthebox.draglistview.DragItem;
 import com.woxthebox.draglistview.DragListView;
 import courseproject.huangyuming.bean.Reminder;
+import courseproject.huangyuming.bean.ReminderDao;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private DragListView mDragListView;
     private ArrayList<Pair<Long, Reminder>> mItemArray;
     private ItemAdapter mListAdapter;
-    private DatabaseHelper mHelper;
+    private ReminderDao mReminderDao;
+
+    private static final int REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,17 +48,16 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Intent intent = new Intent(MainActivity.this, CreateActivity.class);
-//                startActivityForResult(intent, 0);
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, CreateActivity.class);
+                startActivityForResult(intent, REQUEST);
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
             }
         });
 
         mDragListView = (DragListView)findViewById(R.id.drag_list_view);
 
         setupListRecyclerView();
-
     }
 
     private void setupListRecyclerView() {
@@ -76,25 +82,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemDragging(int itemPosition, float x, float y) {
                 super.onItemDragging(itemPosition, x, y);
-
             }
         });
 
         mItemArray = new ArrayList<>();
-        mHelper = DatabaseHelper.getHelper(getApplicationContext());
-        List<Reminder> reminders = new ArrayList<>();
+        mReminderDao = new ReminderDao(MainActivity.this);
+        Dao<Reminder, Integer> remindersDao;
         try {
-            reminders.addAll(mHelper.getHomeworkDao().queryForAll());
-            reminders.add(new Reminder(new Date().toString(), "hhh1"));
-            reminders.add(new Reminder(new Date().toString(), "hhh2"));
-            reminders.add(new Reminder(new Date().toString(), "hhh3"));
-            Log.i("Size", reminders.size()+"");
+            remindersDao = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao();
+            List<Reminder> reminders = remindersDao.queryForAll();
             for (int i = 0; i < reminders.size(); ++i) {
                 mItemArray.add(new Pair<>((long) i, reminders.get(i)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+//        List<Reminder> reminders = new ArrayList<>();
+//        try {
+//            reminders.addAll(mReminderDao.queryForAll());
+//            Log.i("Size", reminders.size()+"");
+//            for (int i = 0; i < reminders.size(); ++i) {
+//                mItemArray.add(new Pair<>((long) i, reminders.get(i)));
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
 
         mDragListView.setLayoutManager(new LinearLayoutManager(this));
@@ -102,22 +114,22 @@ public class MainActivity extends AppCompatActivity {
         mDragListView.setAdapter(mListAdapter, true);
         mDragListView.setCanDragHorizontally(true);
         mDragListView.setCustomDragItem(new MyDragItem(this, R.layout.list_item));
+
+
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == 0) {
-            if (resultCode == RESULT_OK) {
-                Reminder h = (Reminder) data.getSerializableExtra("homework");
-                try {
-                    mHelper.getHomeworkDao().create(h);
-                    mItemArray.add(new Pair<>((long) mItemArray.size(), h));
-                    mListAdapter.notifyDataSetChanged();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+        if (resultCode == RESULT_OK && requestCode == MainActivity.REQUEST) {
+            Reminder h = (Reminder) data.getSerializableExtra("reminder");
+            try {
+                mReminderDao.insert(h);
+                mItemArray.add(new Pair<>((long) mItemArray.size(), h));
+                mListAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
