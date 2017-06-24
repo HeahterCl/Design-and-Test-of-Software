@@ -1,21 +1,31 @@
 package courseproject.huangyuming.wordsdividedreminder;
 
+import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -25,25 +35,34 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.query.In;
 import com.j256.ormlite.table.DatabaseTable;
+import com.sun.jna.IntegerType;
 import com.woxthebox.draglistview.DragItem;
 import com.woxthebox.draglistview.DragListView;
+
+import courseproject.huangyuming.adapter.GroupListAdapter;
 import courseproject.huangyuming.bean.Reminder;
 import courseproject.huangyuming.bean.ReminderDao;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.TimeZone;
+import java.util.logging.Filter;
 
 public class MainActivity extends AppCompatActivity {
 
-    private DragListView mDragListView;
+//    private DragListView mDragListView;
+    private RecyclerView recyclerView;
     private FloatingActionButton mFab;
 
-    private ArrayList<Pair<Long, Reminder>> mItemArray;
-    private ItemAdapter mListAdapter;
+    private ArrayList<Pair<Integer, Object>> mGroupedData;
+    private GroupListAdapter mGroupListAdapter;
+//    private ItemAdapter mListAdapter;
 
     private static final int REQUEST = 1;
 
@@ -51,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
     private SensorManager mSensorManager;
     private Sensor mMagneticSensor;
     private Sensor mAccelerometerSensor;
+
+    //闹钟
+    private AlarmReceiver alarmReceiver = new AlarmReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,10 +85,10 @@ public class MainActivity extends AppCompatActivity {
 
         mFab = (FloatingActionButton) findViewById(R.id.fab);
 
-        mDragListView = (DragListView)findViewById(R.id.drag_list_view);
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
 
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,41 +98,60 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //注册闹钟广播接受器
+        IntentFilter intentfileter = new IntentFilter();
+        intentfileter.addAction("CLOCK");
+        registerReceiver(alarmReceiver, intentfileter);
+
         setupListRecyclerView();
     }
 
     private void setupListRecyclerView() {
-        mDragListView.getRecyclerView().setVerticalScrollBarEnabled(true);
-        mDragListView.setDragListListener(new DragListView.DragListListenerAdapter() {
-            @Override
-            public void onItemDragStarted(int position) {
-                Toast.makeText(mDragListView.getContext(), "Start - position: " + position, Toast.LENGTH_SHORT).show();
-            }
+        recyclerView.setVerticalScrollBarEnabled(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-            @Override
-            public void onItemDragEnded(int fromPosition, int toPosition) {
-                if (fromPosition != toPosition) {
-                    Toast.makeText(mDragListView.getContext(), "End - position: " + toPosition, Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onItemDragging(int itemPosition, float x, float y) {
-                super.onItemDragging(itemPosition, x, y);
-            }
-        });
-
-        mItemArray = new ArrayList<>();
+        mGroupedData = new ArrayList<>();
 
         // 手写数据库操作或使用框架其中选择一种
         try {
             List<Reminder> reminders = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().queryForAll();
             for (int i = 0; i < reminders.size(); ++i) {
-                mItemArray.add(new Pair<>((long) i, reminders.get(i)));
+                mGroupedData.add(new Pair<Integer, Object>(GroupListAdapter.VIEW_TYPE_DIVIDER, new Date()));
+                mGroupedData.add(new Pair<>(GroupListAdapter.VIEW_TYPE_NORMAL, (Object) reminders.get(i)));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        mGroupListAdapter = new GroupListAdapter(MainActivity.this, mGroupedData);
+        mGroupListAdapter.setOnNormalItemClickListener(new GroupListAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, final int position) {
+                final Reminder r = (Reminder) mGroupListAdapter.getItem(position).second;
+
+                if (!r.getFinished()) {
+                    Dialog dialog = new AlertDialog.Builder(view.getContext()).setTitle("(⊙ˍ⊙)").setMessage("确定将其设置为已完成？").setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                            r.setFinished(true);
+                            try {
+                                DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().update(r);
+                                mGroupListAdapter.notifyItemChanged(position);
+//                                ReminderDao reminderDao = new ReminderDao(view.getContext());
+//                                reminderDao.delete(Reminder.UPDATE_TIME, time.getText().toString());
+//                                getItemList().remove(getItemId());
+                                // TODO 更新UI
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).setNegativeButton("取消", null).create();
+                    dialog.show();
+                }
+            }
+        });
+        recyclerView.setAdapter(mGroupListAdapter);
 
 //        mReminderDao = new ReminderDao(MainActivity.this);
 //        List<Reminder> reminders = new ArrayList<>();
@@ -124,20 +165,12 @@ public class MainActivity extends AppCompatActivity {
 //            e.printStackTrace();
 //        }
 
-
-        mDragListView.setLayoutManager(new LinearLayoutManager(this));
-        mListAdapter = new ItemAdapter(MainActivity.this, mItemArray, R.layout.list_item, R.id.root, true);
-        mDragListView.setAdapter(mListAdapter, true);
-        mDragListView.setCanDragHorizontally(true);
-        mDragListView.setCustomDragItem(new MyDragItem(this, R.layout.list_item));
-
-
     }
 
     @Override
     protected void onDestroy() {
-//        DatabaseHelper.getHelper(MainActivity.this).close();
         super.onDestroy();
+        unregisterReceiver(alarmReceiver);
     }
 
     @Override
@@ -160,9 +193,38 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == MainActivity.REQUEST) {
             Reminder h = (Reminder) data.getSerializableExtra("reminder");
             try {
+                //数据库操作
                 DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().create(h);
-                mItemArray.add(new Pair<>((long) (Math.random()*1000), h));
-                mListAdapter.notifyDataSetChanged();
+                mGroupedData.add(new Pair<>(GroupListAdapter.VIEW_TYPE_NORMAL, (Object) h));
+                mGroupListAdapter.notifyDataSetChanged();
+
+                // 获取ID
+                int id = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().extractId(h);
+
+                if (data.getExtras().getBoolean("clockEnable")) {
+                    //添加闹钟
+                    String[] time = h.getTime().split("-| |:");
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.set(Calendar.YEAR, Integer.valueOf(time[0]));
+                    calendar.set(Calendar.MONTH, Integer.valueOf(time[1])-1);
+                    calendar.set(Calendar.DAY_OF_MONTH, Integer.valueOf(time[2])-1);
+                    calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(time[3]));
+                    calendar.set(Calendar.MINUTE, Integer.valueOf(time[4]));
+                    calendar.set(Calendar.SECOND, 0);
+
+                    int Code = 0;//闹钟的唯一标示
+                    Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+                    intent.setAction("CLOCK");
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("clock", h);
+                    intent.putExtras(bundle);
+                    PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, Code, intent, 0);
+                    //得到AlarmManager实例
+                    AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
+                    //根据当前时间预设一个警报
+                    am.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pi);
+                    Log.v("id", Integer.toString(h.getId()));
+                }
 
                 Snackbar.make(mFab, "创建成功", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
             } catch (Exception e) {
@@ -200,10 +262,12 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        List<Pair<Long, Reminder>> toRemove = new ArrayList<>();
-                        for (Pair<Long, Reminder> item : mItemArray) {
-                            if (item.second.getFinished()) {
-                                toRemove.add(item);
+                        List<Pair<Integer, Object>> toRemove = new ArrayList<>();
+                        for (Pair<Integer, Object> item : mGroupedData) {
+                            if (item.first == GroupListAdapter.VIEW_TYPE_NORMAL) {
+                                if (((Reminder) item.second).getFinished()) {
+                                    toRemove.add(item);
+                                }
                             }
                         }
 
@@ -213,11 +277,11 @@ public class MainActivity extends AppCompatActivity {
                                 return;
                             }
 
-                            for (Pair<Long, Reminder> item : toRemove) {
-                                DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().delete(item.second);
+                            for (Pair<Integer, Object> item : toRemove) {
+                                DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().delete((Reminder) item.second);
                             }
-                            mItemArray.removeAll(toRemove);
-                            mListAdapter.notifyDataSetChanged();
+                            mGroupedData.removeAll(toRemove);
+                            mGroupListAdapter.notifyDataSetChanged();
 
                             Snackbar.make(mFab, "删除成功", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
                         } catch (SQLException e) {
@@ -241,8 +305,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindDragView(View clickedView, View dragView) {
-            CharSequence text = ((TextView) clickedView.findViewById(R.id.time)).getText();
-            ((TextView) dragView.findViewById(R.id.time)).setText(text);
+            CharSequence text;
+
+//            text = ((TextView) clickedView.findViewById(R.id.time)).getText();
+//            ((TextView) dragView.findViewById(R.id.time)).setText(text);
 
             text = ((TextView) clickedView.findViewById(R.id.position)).getText();
             ((TextView) dragView.findViewById(R.id.position)).setText(text);
