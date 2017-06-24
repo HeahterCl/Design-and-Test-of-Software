@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private GroupListAdapter mGroupListAdapter;
 //    private ItemAdapter mListAdapter;
 
-    private static final int REQUEST = 1;
+    public static final int REQUEST = 1;
 
     // sensor
     private SensorManager mSensorManager;
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, CreateActivity.class);
+                Intent intent = new Intent(MainActivity.this, AddOnActivity.class);
                 startActivityForResult(intent, REQUEST);
             }
         });
@@ -257,6 +257,13 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         mSensorManager.registerListener(mSensorEventListener, mMagneticSensor, SensorManager.SENSOR_DELAY_GAME);
         mSensorManager.registerListener(mSensorEventListener, mAccelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+
+//        boolean flag = getIntent().getBooleanExtra(getResources().getString(R.string.clip_flag), false);
+        if (ChoiceOpenActivity.CLIP_FLAG) {
+            Intent intent = new Intent(MainActivity.this, AddOnActivity.class);
+            startActivityForResult(intent, REQUEST);
+            ChoiceOpenActivity.CLIP_FLAG = false;
+        }
     }
 
     @Override
