@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private GroupListAdapter mGroupListAdapter;
 //    private ItemAdapter mListAdapter;
 
-    private static final int REQUEST = 1;
+    public static final int REQUEST = 1;
 
     // sensor
     private SensorManager mSensorManager;
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, CreateActivity.class);
+                Intent intent = new Intent(MainActivity.this, AddOnActivity.class);
                 startActivityForResult(intent, REQUEST);
             }
         });
@@ -257,6 +257,13 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         mSensorManager.registerListener(mSensorEventListener, mMagneticSensor, SensorManager.SENSOR_DELAY_GAME);
         mSensorManager.registerListener(mSensorEventListener, mAccelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
+
+//        boolean flag = getIntent().getBooleanExtra(getResources().getString(R.string.clip_flag), false);
+        if (ChoiceOpenActivity.CLIP_FLAG == true) {
+            Intent intent = new Intent(MainActivity.this, CreateActivity.class);
+            startActivityForResult(intent, REQUEST);
+            ChoiceOpenActivity.CLIP_FLAG = false;
+        }
     }
 
     @Override
@@ -270,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == RESULT_OK && requestCode == MainActivity.REQUEST) {
-            Reminder h = (Reminder) data.getSerializableExtra("reminder");
+            Reminder h = (Reminder) data.getSerializableExtra(getResources().getString(R.string.reminder));
             try {
                 //数据库操作
                 DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().create(h);
@@ -280,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
                 mGroupedData.addAll(groupRemindersByDate(reminders));
                 mGroupListAdapter.notifyDataSetChanged();
 
-                if (data.getExtras().getBoolean("clockEnable")) {
+                if (data.getExtras().getBoolean(getResources().getString(R.string.clock_enable))) {
                     //添加闹钟
                     String[] time = h.getTime().split("-| |:");
                     Calendar calendar = Calendar.getInstance();
@@ -294,9 +301,9 @@ public class MainActivity extends AppCompatActivity {
                     // 获取ID
                     int id = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().extractId(h);
                     Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
-                    intent.setAction("CLOCK");
+                    intent.setAction(getResources().getString(R.string.clock_action));
                     Bundle bundle = new Bundle();
-                    bundle.putSerializable("clock", h);
+                    bundle.putSerializable(getResources().getString(R.string.set_clock), h);
                     intent.putExtras(bundle);
                     PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, id, intent, 0);
                     //得到AlarmManager实例
@@ -327,7 +334,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_search) {
+            startActivity(new Intent(MainActivity.this, MapActivity.class));
             return true;
         }
 
