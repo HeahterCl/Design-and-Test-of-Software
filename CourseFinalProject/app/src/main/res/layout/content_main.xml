@@ -5,14 +5,41 @@
     android:id="@+id/content_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginTop="-70dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="courseproject.huangyuming.wordsdividedreminder.MainActivity"
     tools:showIn="@layout/activity_main"
     android:background="@android:color/white">
 
-    <com.woxthebox.draglistview.DragListView
-        android:id="@+id/drag_list_view"
+    <!--<com.woxthebox.draglistview.DragListView-->
+        <!--android:id="@+id/drag_list_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"/>-->
+
+    <!--<ScrollView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content">-->
+        <!--<LinearLayout-->
+            <!--android:orientation="vertical"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content">-->
+
+            <!--<LinearLayout-->
+                <!--android:background="@color/mainColor"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="150dp" />-->
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:background="@android:color/white"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+
+        <!--</LinearLayout>-->
+    <!--</ScrollView>-->
 
 </RelativeLayout>
