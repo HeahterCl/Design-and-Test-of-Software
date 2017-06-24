@@ -64,8 +64,7 @@ public class ReminderDao {
         contentValues.put("position", reminder.getPosition());
         contentValues.put("tasks", reminder.getTasks());
         helper.getWritableDatabase().insert(getTableName(), null, contentValues);
-        // 不能关闭数据库，否则重启时报错: unable to re open already closed database
-        // helper.getWritableDatabase().close();
+        helper.getWritableDatabase().close();
     }
 
     public void update(Reminder reminder, String kindname, String kindvalue) throws SQLException {
@@ -76,7 +75,7 @@ public class ReminderDao {
         String whereClause = kindname+"=?";
         String[] whereArgs = {kindvalue};
         helper.getWritableDatabase().update(getTableName(), contentValues, whereClause, whereArgs);
-        // helper.getWritableDatabase().close();
+        helper.getWritableDatabase().close();
     }
 
     public Cursor query(String kindname, String kindvalue) throws SQLException {
