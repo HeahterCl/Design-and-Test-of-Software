@@ -15,8 +15,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationManagerCompat;
@@ -44,23 +46,36 @@ import com.woxthebox.draglistview.DragListView;
 import courseproject.huangyuming.adapter.GroupListAdapter;
 import courseproject.huangyuming.bean.Reminder;
 import courseproject.huangyuming.bean.ReminderDao;
+import courseproject.huangyuming.utility.TimeParser;
 
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.logging.Filter;
 
 public class MainActivity extends AppCompatActivity {
 
 //    private DragListView mDragListView;
     private RecyclerView recyclerView;
+    private LinearLayoutManager mLayoutManager;
+    private Toolbar toolbar;
     private FloatingActionButton mFab;
+    private CollapsingToolbarLayout collapsingToolbarLayout;
+    private TextView header_year;
+    private TextView header_month;
+    private TextView header_day;
 
-    private ArrayList<Pair<Integer, Object>> mGroupedData;
+    private ArrayList<Pair<Integer, Object>> mGroupedData = new ArrayList<>();
     private GroupListAdapter mGroupListAdapter;
 //    private ItemAdapter mListAdapter;
 
@@ -74,6 +89,9 @@ public class MainActivity extends AppCompatActivity {
     //闹钟
     private AlarmReceiver alarmReceiver = new AlarmReceiver();
 
+    // 控制变量
+    private int lastFirstVisiblePos = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,11 +102,23 @@ public class MainActivity extends AppCompatActivity {
         mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         mFab = (FloatingActionButton) findViewById(R.id.fab);
-
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsingToolbarLayout);
+        header_year = (TextView) findViewById(R.id.header_year);
+        header_month = (TextView) findViewById(R.id.header_month);
+        header_day = (TextView) findViewById(R.id.header_day);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        mLayoutManager = new LinearLayoutManager(this);
+
+        // android 的又一个奇怪之处，需要使用getSupportActionBar()获得ActionBar
+        toolbar.setTitle("");
+//        toolbar.setSubtitle("hhh");
+
+        // 考虑不设置ActionBar
         setSupportActionBar(toolbar);
+
+        setupListRecyclerView();
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,55 +133,103 @@ public class MainActivity extends AppCompatActivity {
         intentfileter.addAction("CLOCK");
         registerReceiver(alarmReceiver, intentfileter);
 
-        setupListRecyclerView();
+    }
+
+    // 将备忘事项按时间分组
+    private ArrayList<Pair<Integer, Object>> groupRemindersByDate(List<Reminder> reminders) {
+        // TreeMap 自带默认排序
+        Map<Date, List<Reminder>> map = new TreeMap<>();
+        DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (Reminder reminder : reminders) {
+            Date d;
+            try {
+                d = fmt.parse(reminder.getTime());
+            } catch (ParseException e) {
+                e.printStackTrace();
+                d = new Date(0);
+            }
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(d);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            if (!map.containsKey(cal.getTime())) {
+                map.put(cal.getTime(), new ArrayList<Reminder>());
+            }
+            map.get(cal.getTime()).add(reminder);
+        }
+        // may need to sort
+
+        ArrayList<Pair<Integer, Object>> result = new ArrayList<>();
+        for (Date key : map.keySet()) {
+            result.add(new Pair<Integer, Object>(GroupListAdapter.VIEW_TYPE_DIVIDER, key));
+            for (Reminder r : map.get(key)) {
+                result.add(new Pair<Integer, Object>(GroupListAdapter.VIEW_TYPE_NORMAL, r));
+            }
+        }
+
+        return result;
     }
 
     private void setupListRecyclerView() {
         recyclerView.setVerticalScrollBarEnabled(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        mGroupedData = new ArrayList<>();
+        recyclerView.setLayoutManager(mLayoutManager);
 
         // 手写数据库操作或使用框架其中选择一种
         try {
             List<Reminder> reminders = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().queryForAll();
-            for (int i = 0; i < reminders.size(); ++i) {
-                mGroupedData.add(new Pair<Integer, Object>(GroupListAdapter.VIEW_TYPE_DIVIDER, new Date()));
-                mGroupedData.add(new Pair<>(GroupListAdapter.VIEW_TYPE_NORMAL, (Object) reminders.get(i)));
-            }
+            mGroupedData.addAll(groupRemindersByDate(reminders));
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         mGroupListAdapter = new GroupListAdapter(MainActivity.this, mGroupedData);
-        mGroupListAdapter.setOnNormalItemClickListener(new GroupListAdapter.OnItemClickListener() {
+        recyclerView.setAdapter(mGroupListAdapter);
+
+        final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onItemClick(View view, final int position) {
-                final Reminder r = (Reminder) mGroupListAdapter.getItem(position).second;
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
 
-                if (!r.getFinished()) {
-                    Dialog dialog = new AlertDialog.Builder(view.getContext()).setTitle("(⊙ˍ⊙)").setMessage("确定将其设置为已完成？").setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
 
-                            r.setFinished(true);
-                            try {
-                                DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().update(r);
-                                mGroupListAdapter.notifyItemChanged(position);
-//                                ReminderDao reminderDao = new ReminderDao(view.getContext());
-//                                reminderDao.delete(Reminder.UPDATE_TIME, time.getText().toString());
-//                                getItemList().remove(getItemId());
-                                // TODO 更新UI
-                            } catch (SQLException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }).setNegativeButton("取消", null).create();
-                    dialog.show();
+                int firstPos = mLayoutManager.findFirstVisibleItemPosition();
+                if (firstPos == lastFirstVisiblePos) {
+                    return;
                 }
+
+                lastFirstVisiblePos = firstPos;
+
+                int viewType =  mGroupListAdapter.getItem(firstPos).first;
+
+                Date d;
+                if (viewType == GroupListAdapter.VIEW_TYPE_NORMAL) {
+                    String timeString = ((Reminder)mGroupListAdapter.getItem(firstPos).second).getTime();
+                    try {
+                        d = fmt.parse(timeString);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                        d = new Date(0);
+                    }
+                }
+                else {
+                    d = (Date) mGroupListAdapter.getItem(firstPos).second;
+                }
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(d);
+                header_year.setText(cal.get(Calendar.YEAR)+"");
+                header_month.setText(TimeParser.month2English(cal.get(Calendar.MONTH)+1));
+                header_day.setText(TimeParser.zeroPadding(cal.get(Calendar.DAY_OF_MONTH), 2));
+//                getSupportActionBar().setTitle(TimeParser.zeroPadding(cal.get(Calendar.DAY_OF_MONTH), 2)+"  "+TimeParser.month2English(cal.get(Calendar.MONTH)+1));
+//                getSupportActionBar().setSubtitle(cal.get(Calendar.YEAR)+"");
+//                collapsingToolbarLayout.setTitle(TimeParser.zeroPadding(cal.get(Calendar.DAY_OF_MONTH), 2)+"  "+TimeParser.month2English(cal.get(Calendar.MONTH)+1));
             }
         });
-        recyclerView.setAdapter(mGroupListAdapter);
 
 //        mReminderDao = new ReminderDao(MainActivity.this);
 //        List<Reminder> reminders = new ArrayList<>();
@@ -195,11 +273,14 @@ public class MainActivity extends AppCompatActivity {
             try {
                 //数据库操作
                 DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().create(h);
-                mGroupedData.add(new Pair<>(GroupListAdapter.VIEW_TYPE_NORMAL, (Object) h));
-                mGroupListAdapter.notifyDataSetChanged();
 
                 // 获取ID
                 int id = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().extractId(h);
+
+                List<Reminder> reminders = DatabaseHelper.getHelper(MainActivity.this).getRemindersDao().queryForAll();
+                mGroupedData.clear();
+                mGroupedData.addAll(groupRemindersByDate(reminders));
+                mGroupListAdapter.notifyDataSetChanged();
 
                 if (data.getExtras().getBoolean("clockEnable")) {
                     //添加闹钟
@@ -248,7 +329,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_search) {
+            startActivity(new Intent(MainActivity.this, SearchActivity.class));
             return true;
         }
 

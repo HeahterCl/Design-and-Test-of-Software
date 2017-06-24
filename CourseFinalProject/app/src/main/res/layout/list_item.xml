@@ -5,7 +5,8 @@
     android:paddingTop="5dp"
     android:paddingBottom="5dp"
     android:paddingLeft="10dp"
-    android:paddingRight="10dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
     android:layout_marginTop="5dp"
     android:layout_marginBottom="5dp"
     android:orientation="horizontal"
@@ -31,6 +32,7 @@
             <TextView
                 android:id="@+id/position"
                 style="@style/ListItemStyle"
+                android:textStyle="bold"
                 android:text="position"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"/>
@@ -46,6 +48,7 @@
             android:id="@+id/contents"
             style="@style/ListItemStyle"
             android:text="contents"
+            android:textSize="14sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
@@ -56,15 +59,21 @@
             <!--android:background="@color/buttonColor"/>-->
     </LinearLayout>
 
-    <ToggleButton
-        android:id="@+id/toggleButton"
-        android:layout_margin="10dp"
-        android:background="@drawable/complete_selector"
-        android:enabled="false"
-        android:textOn=""
-        android:textOff=""
-        android:layout_width="8dp"
-        android:layout_height="8dp"
-        android:layout_gravity="center_vertical" />
+    <LinearLayout
+        android:id="@+id/toggleDetector"
+        android:padding="20dp"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <ToggleButton
+            android:id="@+id/toggleButton"
+            android:background="@drawable/complete_selector"
+            android:enabled="false"
+            android:textOn=""
+            android:textOff=""
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
 
 </LinearLayout>
