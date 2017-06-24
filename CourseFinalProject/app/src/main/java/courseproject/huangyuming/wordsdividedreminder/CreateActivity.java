@@ -3,7 +3,6 @@ package courseproject.huangyuming.wordsdividedreminder;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -89,8 +88,8 @@ public class CreateActivity extends Activity {
     private TextView type;
     private Button complete;
     private Dialog wait;
-    private String time = "";
-    private String date = "";
+    private String time;
+    private String date;
     private Reminder reminder;
     private boolean clockEnable;
 
@@ -118,11 +117,6 @@ public class CreateActivity extends Activity {
 
         reminder = new Reminder();
 
-        ClipboardManager clipboardManager = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-        if (!clipboardManager.getText().toString().equals("")) {
-            before.setText(clipboardManager.getText().toString());
-            clipboardManager.setText("");
-        }
 
         startSRBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -211,8 +205,8 @@ public class CreateActivity extends Activity {
                     reminder.setTasks(details.getText().toString());
                     Intent intent = new Intent(CreateActivity.this, MainActivity.class);
                     Bundle bundle = new Bundle();
-                    bundle.putBoolean(getResources().getString(R.string.clock_enable), clockEnable);
-                    bundle.putSerializable(getResources().getString(R.string.reminder), reminder);
+                    bundle.putBoolean("clockEnable", clockEnable);
+                    bundle.putSerializable("reminder", reminder);
                     intent.putExtras(bundle);
                     setResult(RESULT_OK, intent);
                     finish();
@@ -448,8 +442,6 @@ public class CreateActivity extends Activity {
                     .setPositiveButton("狠心退出", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(CreateActivity.this, MainActivity.class);
-                            startActivity(intent);
                             CreateActivity.super.onBackPressed();
                         }
                     }).setNegativeButton("不了", null).setCancelable(false).show();
