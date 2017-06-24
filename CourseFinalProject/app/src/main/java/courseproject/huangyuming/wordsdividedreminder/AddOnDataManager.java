@@ -148,9 +148,6 @@ public class AddOnDataManager implements DatePicker.OnDateChangedListener,
             if (!hasFocus) { location = ((EditText) v).getText().toString(); }
         });
     }
-    void clearKeywordEditTextFocus() {
-        keywordEditText.clearFocus();
-    }
     void setKeywordEditText(EditText editText) {
         keywordEditText = editText;
         keywordEditText.setOnFocusChangeListener((v, hasFocus) -> {

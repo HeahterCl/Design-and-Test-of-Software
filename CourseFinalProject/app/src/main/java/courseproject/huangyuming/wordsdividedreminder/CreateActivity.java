@@ -74,7 +74,6 @@ import courseproject.huangyuming.utility.SpeechRecognitionHelper;
 
 public class CreateActivity extends Activity {
     private static final String dividerurl = "http://api.ltp-cloud.com/analysis/";
-    private static final String timeurl = "http://osp.voicecloud.cn/index.php/ajax/generaldic/getresult";
     private static final String bosonTimeUrl = "http://api.bosonnlp.com/time/analysis?pattern=";
     private static final String appid = "5847e061";
     private static final String token = "hMmHWWid.11283._tGryZoQ5HpS";
@@ -104,7 +103,7 @@ public class CreateActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create);
+        //setContentView(R.layout.activity_create);
 
         before = (EditText)findViewById(R.id.before);
         startSRBtn = (Button)findViewById(R.id.startSRBtn);
@@ -222,6 +221,8 @@ public class CreateActivity extends Activity {
                 }
             }
         });
+        complete.setFocusable(false);
+        complete.setFocusableInTouchMode(false);
 
 //        details.set
         details.setOnClickListener(new View.OnClickListener() {

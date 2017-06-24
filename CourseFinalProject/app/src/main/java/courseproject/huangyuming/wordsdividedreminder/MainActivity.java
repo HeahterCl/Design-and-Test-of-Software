@@ -259,8 +259,8 @@ public class MainActivity extends AppCompatActivity {
         mSensorManager.registerListener(mSensorEventListener, mAccelerometerSensor, SensorManager.SENSOR_DELAY_GAME);
 
 //        boolean flag = getIntent().getBooleanExtra(getResources().getString(R.string.clip_flag), false);
-        if (ChoiceOpenActivity.CLIP_FLAG) {
-            Intent intent = new Intent(MainActivity.this, AddOnActivity.class);
+        if (ChoiceOpenActivity.CLIP_FLAG == true) {
+            Intent intent = new Intent(MainActivity.this, CreateActivity.class);
             startActivityForResult(intent, REQUEST);
             ChoiceOpenActivity.CLIP_FLAG = false;
         }
