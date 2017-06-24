@@ -39,6 +39,7 @@ public class SpeechRecognitionHelper {
     private SpeechRecognitionHelper() {}
 
     public void init(Context context) {
+//        SpeechUtility.createUtility(context, SpeechConstant.APPID + "=58591030");
         SpeechUtility.createUtility(context, SpeechConstant.APPID + "=582b3f8f");
     }
 
