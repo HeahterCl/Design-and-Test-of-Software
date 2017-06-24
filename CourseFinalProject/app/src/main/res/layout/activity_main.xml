@@ -7,69 +7,19 @@
     android:fitsSystemWindows="true"
     tools:context="courseproject.huangyuming.wordsdividedreminder.MainActivity">
 
-    <!--配置不容许半点错误：AppBarLayout高度固定 CollapsingToolbarLayout高度为match_parent-->
-    <android.support.design.widget.AppBarLayout
-        android:background="@color/mainColor"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:theme="@style/AppTheme.AppBarOverlay">
-        <android.support.design.widget.CollapsingToolbarLayout
-            android:id="@+id/collapsingToolbarLayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:contentScrim="@color/mainColor"
-            app:expandedTitleMarginStart="48dp"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/header_scrim"
-                app:layout_collapseMode="parallax"
-                app:layout_collapseParallaxMultiplier="0.7" />
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:layout_collapseMode="pin" >
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
-                    <TextView
-                        android:id="@+id/header_day"
-                        android:text="00"
-                        android:textSize="40sp"
-                        android:textStyle="bold"
-                        android:gravity="center_vertical"
-                        android:layout_gravity="center_vertical"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                    <LinearLayout
-                        android:layout_marginLeft="10dp"
-                        android:orientation="vertical"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent">
-                        <TextView
-                            android:id="@+id/header_month"
-                            android:text="00"
-                            android:textStyle="bold"
-                            android:gravity="bottom"
-                            android:layout_weight="1"
-                            android:layout_width="wrap_content"
-                            android:layout_height="0dp" />
-                        <TextView
-                            android:id="@+id/header_year"
-                            android:text="00"
-                            android:textStyle="bold"
-                            android:gravity="top"
-                            android:layout_weight="1"
-                            android:layout_width="wrap_content"
-                            android:layout_height="0dp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </android.support.v7.widget.Toolbar>
-        </android.support.design.widget.CollapsingToolbarLayout>
-    </android.support.design.widget.AppBarLayout>
+    <!--<android.support.design.widget.AppBarLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:theme="@style/AppTheme.AppBarOverlay">-->
+
+    <!--<android.support.v7.widget.Toolbar-->
+    <!--android:id="@+id/toolbar"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="?attr/actionBarSize"-->
+    <!--android:background="?attr/colorPrimary"-->
+    <!--app:popupTheme="@style/AppTheme.PopupOverlay" />-->
+
+    <!--</android.support.design.widget.AppBarLayout>-->
 
     <include layout="@layout/content_main" />
 
@@ -77,10 +27,8 @@
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center"
+        android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="@color/mainColor" />
-    <!--android:src="@mipmap/floatbarcenter"-->
+        app:srcCompat="@android:drawable/ic_input_add" />
 
 </android.support.design.widget.CoordinatorLayout>

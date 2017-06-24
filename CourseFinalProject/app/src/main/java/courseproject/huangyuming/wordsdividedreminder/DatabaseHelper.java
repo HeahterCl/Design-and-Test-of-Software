@@ -18,7 +18,7 @@ import courseproject.huangyuming.bean.Reminder;
 
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
-    private static final String DATABASE_NAME = "reminders.db";
+    private static final String DATABASE_NAME = "database1.db";
     private static final int VERSION = 1;
 
     public DatabaseHelper(Context context) {
@@ -66,20 +66,20 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return instance;
     }
 
-    private Dao<Reminder, Integer> remindersDao;
+    private Dao<Reminder, Integer> homeworkDao;
     /**
-     * 获得remindersDao
+     * 获得homeworkDao
      *
      * @return
      * @throws SQLException
      */
-    public Dao<Reminder, Integer> getRemindersDao() throws SQLException
+    public Dao<Reminder, Integer> getHomeworkDao() throws SQLException
     {
-        if (remindersDao == null)
+        if (homeworkDao == null)
         {
-            remindersDao = getDao(Reminder.class);
+            homeworkDao = getDao(Reminder.class);
         }
-        return remindersDao;
+        return homeworkDao;
     }
 
     /**
@@ -89,7 +89,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void close()
     {
         super.close();
-        remindersDao = null;
+        homeworkDao = null;
     }
 
 }

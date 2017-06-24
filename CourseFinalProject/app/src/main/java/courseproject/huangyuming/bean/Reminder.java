@@ -2,11 +2,9 @@ package courseproject.huangyuming.bean;
 
 
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.stmt.query.In;
 import com.j256.ormlite.table.DatabaseTable;
 
 import java.io.Serializable;
-import java.util.Calendar;
 
 /**
  * Created by ym on 16-10-18.
@@ -14,74 +12,54 @@ import java.util.Calendar;
 
 @DatabaseTable(tableName = "reminder")
 public class Reminder implements Serializable {
-    public static final String UPDATE_TIME = "time";
-    public static final String UPDATE_POSITION = "position";
-    public static final String UPDATE_TASKS = "tasks";
-
     @DatabaseField(generatedId = true)
     private int id;
 
-    @DatabaseField(columnName = "time")
-    private String time;
-    @DatabaseField(columnName = "position")
-    private String position;
-    @DatabaseField(columnName = "tasks")
-    private String tasks;
-    @DatabaseField(columnName = "finished")
-    private boolean finished;
+    @DatabaseField(columnName = "lessonName")
+    private String lessonName;
+    @DatabaseField(columnName = "ddl")
+    private String ddl;
+    @DatabaseField(columnName = "content")
+    private String content;
+    @DatabaseField(columnName = "photoUrl")
+    private String photoUrl;
 
     public Reminder() {
-        this.time = Integer.toString(Calendar.getInstance().get(Calendar.YEAR))+"-"
-                +Integer.toString(Calendar.getInstance().get(Calendar.MONTH))+"-"
-                +Integer.toString(Calendar.getInstance().get(Calendar.DATE))+"-"
-                +Integer.toString(Calendar.getInstance().get(Calendar.HOUR))+"-"
-                +Integer.toString(Calendar.getInstance().get(Calendar.MINUTE))+"-"
-                +Integer.toString(Calendar.getInstance().get(Calendar.SECOND));
-        this.position = "";
-        this.tasks = "";
-        this.finished = false;
+
+    }
+    public Reminder(String lessonName) {
+        this.lessonName = lessonName;
     }
 
-    public Reminder(String time, String position, String task) {
-        this.time = time;
-        this.position = position;
-        this.tasks = task;
-        this.finished = false;
+    public String getLessonName() {
+        return lessonName;
     }
 
-    public String getTime() {
-        return time;
+    public void setLessonName(String lessonName) {
+        this.lessonName = lessonName;
     }
 
-    public void setTime(String time) {
-        this.time = time;
+    public String getDdl() {
+        return ddl;
     }
 
-    public String getPosition() {
-        return position;
+    public void setDdl(String ddl) {
+        this.ddl = ddl;
     }
 
-    public void setPosition(String position) {
-        this.position = position;
+    public String getContent() {
+        return content;
     }
 
-    public String getTasks() {
-        return tasks;
+    public void setContent(String content) {
+        this.content = content;
     }
 
-    public void setTasks(String tasks) {
-        this.tasks = tasks;
+    public String getPhotoUrl() {
+        return photoUrl;
     }
 
-    public boolean getFinished() {
-        return finished;
-    }
-
-    public void setFinished(boolean finished) {
-        this.finished = finished;
-    }
-
-    public int getId() {
-        return this.id;
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }
